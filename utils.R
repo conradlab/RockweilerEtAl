@@ -1,3 +1,5 @@
+suppressPackageStartupMessages(library(scales))
+
 create_tissue_palette <- function(local) {
     # Creates a ggplot color and fill scale for consistent coloring of tissues
     
@@ -61,6 +63,10 @@ my_theme <- function () {
         theme(
             plot.title = element_text(hjust = 0.5) # Center title
         )
+}
+
+timestamp_figure <- function(line=-1,side=1,outer=TRUE,adj=0, cex=0.5) {
+    mtext(format(Sys.time(), "%Y%m%d %H:%M"), cex=cex, line=line, side=side, adj=adj, outer=outer)
 }
 
 timestamp_ggfigure <- function(p) {
