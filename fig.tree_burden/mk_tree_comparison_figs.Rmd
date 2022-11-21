@@ -1,0 +1,254 @@
+---
+title: "Make figures related to comparing full tissue and germlayer trees"
+output: html_notebook
+---
+
+# Metadata
+* **Last modified:** `r format(Sys.time(), "%Y%m%d")`
+
+## Purpose
+* Plot full tissue and germlayer mutation buden trees 
+    + w/ their own burden color legend to improve readability of within tree comparisons
+    + w/ same burden color legend to improve readability of between tree comparisons
+    + using "sum of descendent edges" mutation burden trees to improve readability of between tree comparisons
+* Create table of edge weights
+
+# Setup environment
+```{r}
+source("../tree_utils.R")
+source("../utils.R")
+source("mk_tree_mutation_burden.functions.R")
+```
+
+## Globals
+```{r}
+local = 2
+today = get_todays_date()
+input_dir = "input_files"
+output_dir = "output_files"
+na_color = "gray"
+# save_file = FALSE
+save_file = TRUE
+
+tree_raw_weights = list()
+tree_consensus_g = list()
+```
+
+
+# Full tree
+```{r}
+tree_name = "full.no_gtex_blacklist.no_sex.no_cell_lines"
+consensus_g_fn = file.path(input_dir, "consensus_g.power_adjusted_weights.exact_match.full.no_gtex_blacklist.no_sex.no_cell_lines.20200714.rds")
+edge_indexes_to_exclude = c(9, 46, 58)
+
+tmp = load_data(tree_name, consensus_g_fn, local, edge_indexes_to_exclude)
+
+tissue_g = tmp$tissue_g
+consensus_g = tmp$consensus_g
+tree_consensus_g[[tree_name]] = consensus_g
+leaves = tmp$leaves
+non_leaf_edge_indexes = tmp$non_leaf_edge_indexes
+distance_from_root = tmp$distance_from_root
+mutation_vector_str2edge = tmp$mutation_vector_str2edge
+```
+
+## Raw weights
+```{r, fig.width=20, fig.height=20}
+fn = file.path(output_dir, sprintf("mutation_burden.no_labels.raw_weights.%s.%s.pdf", tree_name, today))
+
+if (save_file) {
+    pdf(fn, width=20, height=20)
+}
+consensus_g_raw_weights = plot_g(consensus_g, type="mutation_prob", category="numeric", save_file=FALSE, set_na_colors = TRUE, set_widths=FALSE, diverging_palette=FALSE, set_edge_labels=FALSE, na_color="grey", edge_label_color="black", set_vertex_labels=FALSE, use_log_trans = FALSE, pseudo_count = 0)
+tree_raw_weights[[tree_name]] = consensus_g_raw_weights
+
+if (save_file) {
+    dev.off()
+    write_new_file_message(fn)
+}
+```
+
+Make a color bar
+```{r, fig.height=7, fig.width=2}
+fn = file.path(output_dir, sprintf("mutation_burden.no_labels.raw_weights.%s.color_bar.fixed_color_bar_range.%s.pdf", tree_name, today))
+mk_color_bar(consensus_g_raw_weights, fn, log_trans=FALSE, percent=TRUE, save_file=save_file)
+```
+
+## Log-scaled weights
+```{r, fig.width=20, fig.height=20}
+fn = file.path(output_dir, sprintf("mutation_burden.no_labels.log_weights.%s.%s.pdf", tree_name, today))
+
+if (save_file) {
+    pdf(fn, width=20, height=20)
+}
+consensus_g_log_weights = plot_g(consensus_g, type="mutation_prob", category="numeric", save_file=FALSE, set_na_colors = TRUE, set_widths=FALSE, diverging_palette=FALSE, set_edge_labels=FALSE, na_color="grey", edge_label_color="black", set_vertex_labels=FALSE, use_log_trans = TRUE, pseudo_count = 0)
+full_tree_consensus_g_log_weights = consensus_g_log_weights
+if (save_file) {
+    dev.off()
+    write_new_file_message(fn)
+}
+```
+
+Make a color bar
+```{r, fig.height=7, fig.width=2}
+fn = file.path(output_dir, sprintf("mutation_burden.no_labels.log.weights.%s.color_bar.%s.pdf", tree_name, today))
+mk_color_bar(consensus_g_log_weights, fn, log_trans=TRUE, percent=TRUE, save_file=save_file)
+```
+
+## Create a table of edge weights
+```{r}
+unknown_weights = E(consensus_g)$weight_unknown
+edge_mutation_weights = E(consensus_g)$mutation_prob
+
+edge_weight_df = as.data.frame(ends(consensus_g, E(consensus_g), names=TRUE))
+colnames(edge_weight_df) = c("edge_head", "edge_tail")
+edge_weight_df$edge_mutation_weight = edge_mutation_weights
+edge_weight_df$edge_mutation_weight[unknown_weights] = NA
+```
+
+```{r}
+output_fn = file.path(output_dir, sprintf("mutation_burden.weights.%s.%s.txt", tree_name, today))
+write.table(edge_weight_df, file=output_fn, row.names=FALSE, quote=FALSE, sep="\t")
+write_new_file_message(output_fn)
+```
+
+# Germlayer tree
+```{r}
+tree_name = "germ_layers"
+consensus_g_fn = file.path(input_dir, "consensus_g.power_adjusted_weights.exact_match.germ_layers.20200715.rds")
+edge_indexes_to_exclude = c()
+
+tmp = load_data(tree_name, consensus_g_fn, local, edge_indexes_to_exclude)
+
+tissue_g = tmp$tissue_g
+consensus_g = tmp$consensus_g
+tree_consensus_g[[tree_name]] = consensus_g
+leaves = tmp$leaves
+non_leaf_edge_indexes = tmp$non_leaf_edge_indexes
+distance_from_root = tmp$distance_from_root
+mutation_vector_str2edge = tmp$mutation_vector_str2edge
+```
+
+## Raw weights
+```{r, fig.width=20, fig.height=20}
+fn = file.path(output_dir, sprintf("mutation_burden.no_labels.raw_weights.%s.%s.pdf", tree_name, today))
+
+if (save_file) {
+    pdf(fn, width=20, height=20)
+}
+consensus_g_raw_weights = plot_g(consensus_g, type="mutation_prob", category="numeric", save_file=FALSE, set_na_colors = TRUE, set_widths=FALSE, diverging_palette=FALSE, set_edge_labels=FALSE, na_color="grey", edge_label_color="black", set_vertex_labels=FALSE, use_log_trans = FALSE, pseudo_count = 0)
+tree_raw_weights[[tree_name]] = consensus_g_raw_weights
+
+if (save_file) {
+    dev.off()
+    write_new_file_message(fn)
+}
+```
+
+
+Make a color bar
+```{r, fig.height=7, fig.width=2}
+fn = file.path(output_dir, sprintf("mutation_burden.no_labels.raw_weights.%s.color_bar.%s.pdf", tree_name, today))
+mk_color_bar(consensus_g_raw_weights, fn, log_trans=FALSE, percent=TRUE, save_file=save_file)
+```
+
+## Create a table of edge weights
+```{r}
+unknown_weights = E(consensus_g)$weight_unknown
+edge_mutation_weights = E(consensus_g)$mutation_prob
+
+edge_weight_df = as.data.frame(ends(consensus_g, E(consensus_g), names=TRUE))
+colnames(edge_weight_df) = c("edge_head", "edge_tail")
+edge_weight_df$edge_mutation_weight = edge_mutation_weights
+edge_weight_df$edge_mutation_weight[unknown_weights] = NA
+```
+
+```{r}
+output_fn = file.path(output_dir, sprintf("mutation_burden.weights.%s.%s.txt", tree_name, today))
+write.table(edge_weight_df, file=output_fn, row.names=FALSE, quote=FALSE, sep="\t")
+write_new_file_message(output_fn)
+```
+
+# Use same color bar range for both trees
+```{r}
+# Calculate global min and max edge weight
+min_weight = min(
+    min(E(tree_raw_weights[["full.no_gtex_blacklist.no_sex.no_cell_lines"]])$values_used, na.rm=TRUE), 
+    min(E(tree_raw_weights[["germ_layers"]])$values_used, na.rm=TRUE)) # 0 (0 is used for min in plot_g when values are >= 0)
+
+# To set the max appropariate, calculate the raw weights for both trees then take the max
+max_weight = max(
+    max(E(tree_raw_weights[["full.no_gtex_blacklist.no_sex.no_cell_lines"]])$values_used, na.rm=TRUE), 
+    max(E(tree_raw_weights[["germ_layers"]])$values_used, na.rm=TRUE)) # 0.44
+```
+
+
+```{r, fig.width=20, fig.height=20}
+for (tree_name in names(tree_raw_weights)) {
+    fn = file.path(output_dir, sprintf("mutation_burden.no_labels.raw_weights.%s.fixed_color_bar_range.%s.pdf", tree_name, today))
+    
+    consensus_g = tree_raw_weights[[tree_name]]
+    
+    if (save_file) {
+        pdf(fn, width=20, height=20)
+    }
+    consensus_g_raw_weights = plot_g(consensus_g, type="mutation_prob", category="numeric", save_file=FALSE, set_na_colors = TRUE, set_widths=FALSE, diverging_palette=FALSE, set_edge_labels=FALSE, na_color="grey", edge_label_color="black", set_vertex_labels=FALSE, use_log_trans = FALSE, pseudo_count = 0, value_global_max=max_weight)
+    
+    if (save_file) {
+        dev.off()
+        write_new_file_message(fn)
+    }
+}
+```
+
+Make a color bar
+```{r, fig.height=7, fig.width=2}
+fn = file.path(output_dir, sprintf("mutation_burden.no_labels.raw_weights.fixed_color_bar_range.color_bar.%s.pdf", today))
+# Same color bar used for both trees so using last value of consensus_g_raw_weights is fine
+mk_color_bar(consensus_g_raw_weights, fn, log_trans=FALSE, percent=TRUE, save_file=save_file, use_custom_range = TRUE, my_min=min_weight, my_max=max_weight)
+```
+
+
+# Create aggregate burden trees
+## Calculate aggregate burden
+```{r}
+for (tree_name in names(tree_consensus_g)) {
+    consensus_g = tree_consensus_g[[tree_name]]
+    consensus_g = set.edge.attribute(consensus_g, "descendent_weight_sum", value=0)
+    for (my_edge in E(consensus_g)) {
+        descendent_nodes = get_descendants(consensus_g, head_of(consensus_g, my_edge)) 
+        
+        descendent_edges = c(my_edge, E(consensus_g)[from(descendent_nodes)])
+        descendent_weight_sum = sum(get.edge.attribute(consensus_g, "mutation_prob", descendent_edges))
+        consensus_g = set.edge.attribute(consensus_g, "descendent_weight_sum", my_edge, descendent_weight_sum)
+    }
+    tree_consensus_g[[tree_name]] = consensus_g
+}
+```
+
+## Plot
+```{r, fig.width=20, fig.height=20}
+for (tree_name in names(tree_consensus_g)) {
+    fn = file.path(output_dir, sprintf("mutation_burden.no_labels.descendent_weight_sum.%s.%s.pdf", tree_name, today))
+    
+    if (save_file) {
+        pdf(fn, width=20, height=20)
+    }
+    consensus_g_sum_weights = plot_g(tree_consensus_g[[tree_name]], type="descendent_weight_sum", category="numeric", save_file=FALSE, set_na_colors = TRUE, set_widths=FALSE, diverging_palette=FALSE, set_edge_labels=FALSE, na_color="grey", edge_label_color="black", set_vertex_labels=FALSE, use_log_trans = FALSE, pseudo_count = 0)
+    
+    if (save_file) {
+        dev.off()
+        write_new_file_message(fn)
+    }
+}
+```
+
+Make a color bar
+```{r, fig.height=7, fig.width=2}
+# Same color bar used for both trees (both have, by definition, range [0,1] so using last value of consensus_g_raw_weights is fine
+fn = file.path(output_dir, sprintf("mutation_burden.no_labels.descendent_weight_sum.color_bar.%s.pdf", tree_name, today))
+mk_color_bar(consensus_g_sum_weights, fn, log_trans=FALSE, percent=TRUE, save_file=save_file)
+```
+
+
+
