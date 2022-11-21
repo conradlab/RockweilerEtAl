@@ -1,0 +1,45 @@
+Zygote	Gastrula
+Gastrula	Ectoderm
+Gastrula	Endoderm
+Gastrula	Mesoderm
+Ectoderm	Brain - Amygdala
+Ectoderm	Brain - Anterior cingulate cortex (BA24)
+Ectoderm	Brain - Caudate (basal ganglia)
+Ectoderm	Brain - Cerebellar Hemisphere
+Ectoderm	Brain - Cerebellum
+Ectoderm	Brain - Cortex
+Ectoderm	Brain - Frontal Cortex (BA9)
+Ectoderm	Brain - Hippocampus
+Ectoderm	Brain - Hypothalamus
+Ectoderm	Brain - Nucleus accumbens (basal ganglia)
+Ectoderm	Brain - Putamen (basal ganglia)
+Ectoderm	Brain - Spinal cord (cervical c-1)
+Ectoderm	Brain - Substantia nigra
+Ectoderm	Minor Salivary Gland
+Ectoderm	Nerve - Tibial
+Ectoderm	Pituitary
+Ectoderm	Skin - Not Sun Exposed (Suprapubic)
+Ectoderm	Skin - Sun Exposed (Lower leg)
+Endoderm	Colon - Sigmoid
+Endoderm	Colon - Transverse
+Endoderm	Esophagus - Gastroesophageal Junction	
+Endoderm	Esophagus - Mucosa
+Endoderm	Liver
+Endoderm	Lung
+Endoderm	Pancreas
+Endoderm	Small Intestine - Terminal Ileum
+Endoderm	Stomach
+Endoderm	Thyroid
+Mesoderm	Adipose - Subcutaneous
+Mesoderm	Adipose - Visceral (Omentum)
+Mesoderm	Adrenal Gland
+Mesoderm	Artery - Aorta
+Mesoderm	Artery - Coronary
+Mesoderm	Artery - Tibial
+Mesoderm	Breast - Mammary Tissue
+Mesoderm	Esophagus - Muscularis
+Mesoderm	Heart - Atrial Appendage
+Mesoderm	Heart - Left Ventricle
+Mesoderm	Kidney - Cortex
+Mesoderm	Muscle - Skeletal
+Mesoderm	Whole Blood

@@ -1,0 +1,69 @@
+Zygote	Gastrula
+Gastrula	Mesoderm
+Gastrula	Endoderm
+Gastrula	Ectoderm
+Mesoderm	Paraxial mesoderm
+Paraxial mesoderm	Artery - Aorta
+Paraxial mesoderm	Muscle - Skeletal
+Mesoderm	Lateral plate mesoderm
+Mesoderm	Intermediate mesoderm
+Lateral plate mesoderm	Splanchnic mesoderm
+Splanchnic mesoderm	Heart tube
+Splanchnic mesoderm	Esophagus - Muscularis
+Splanchnic mesoderm	Splanchnopleuric mesoderm
+Splanchnopleuric mesoderm	Artery - Coronary
+Splanchnopleuric mesoderm	Artery - Tibial
+Heart tube	Heart - Atrial Appendage
+Heart tube	Heart - Left Ventricle
+Lateral plate mesoderm	White adipose depots
+White adipose depots	Adipose - Visceral (Omentum)
+White adipose depots	Subcutaneous
+Lateral plate mesoderm	Whole Blood
+Subcutaneous	Adipose - Subcutaneous
+Subcutaneous	Breast - Mammary Tissue
+Endoderm	Foregut
+Endoderm	Midgut
+Endoderm	Colon - Sigmoid
+Foregut	Laryngotracheal diverticulum
+Foregut	Duodenum (proximal)
+Foregut	Stomach
+Foregut	Thyroid
+Laryngotracheal diverticulum	Esophagus - Gastroesophageal Junction	
+Laryngotracheal diverticulum	Esophagus - Mucosa
+Laryngotracheal diverticulum	Lung
+Duodenum (proximal)	Liver
+Duodenum (proximal)	Pancreas
+Midgut	Colon - Transverse
+Midgut	Small Intestine - Terminal Ileum
+Intermediate mesoderm	Adrenal Gland
+Intermediate mesoderm	Kidney - Cortex
+Ectoderm	Surface ectoderm
+Ectoderm	Neural ectoderm
+Surface ectoderm	Skin
+Skin	Skin - Sun Exposed (Lower leg)
+Skin	Skin - Not Sun Exposed (Suprapubic)
+Surface ectoderm	Minor Salivary Gland
+Neural ectoderm	Primitive spinal cord
+Neural ectoderm	Forebrain
+Neural ectoderm	Brain - Substantia nigra
+Neural ectoderm	Hindbrain
+Primitive spinal cord	Brain - Spinal cord (cervical c-1)
+Primitive spinal cord	Nerve - Tibial
+Forebrain	Diencephalon
+Forebrain	Telencephalon
+Diencephalon	Brain - Hypothalamus
+Diencephalon	Pituitary
+Telencephalon	Dorsal
+Telencephalon	Ventral
+Dorsal	BA9 sample
+BA9 sample	Brain - Cortex
+Dorsal	Brain - Anterior cingulate cortex (BA24)
+BA9 sample	Brain - Frontal Cortex (BA9)
+Ventral	Brain - Hippocampus
+Ventral	Basal ganglia
+Ventral	Brain - Amygdala
+Basal ganglia	Brain - Putamen (basal ganglia)
+Basal ganglia	Brain - Caudate (basal ganglia)
+Basal ganglia	Brain - Nucleus accumbens (basal ganglia)
+Hindbrain	Brain - Cerebellum
+Hindbrain	Brain - Cerebellar Hemisphere
