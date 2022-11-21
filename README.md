@@ -1,2 +1,3 @@
 # RockweilerEtAl
-Code to reproduce findings from Rockweiler et al. study of somatic mutation in GTEx tissues
+Code to reproduce findings from Rockweiler et al. study of postzygotic mutation in GTEx tissues
+
