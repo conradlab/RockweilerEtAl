@@ -27,8 +27,8 @@ today = get_todays_date()
 input_dir = "input_files"
 output_dir = "output_files"
 na_color = "gray"
-# save_file = FALSE
-save_file = TRUE
+save_file = FALSE
+# save_file = TRUE
 
 tree_raw_weights = list()
 tree_consensus_g = list()
