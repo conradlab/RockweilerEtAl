@@ -1,0 +1,46 @@
+edge_head	edge_tail	edge_mutation_weight
+Zygote	Gastrula	0.333267003254094
+Gastrula	Ectoderm	0.444701740192385
+Gastrula	Endoderm	0.0838746920769788
+Gastrula	Mesoderm	0.138156564476542
+Ectoderm	Brain - Amygdala	NA
+Ectoderm	Brain - Anterior cingulate cortex (BA24)	NA
+Ectoderm	Brain - Caudate (basal ganglia)	NA
+Ectoderm	Brain - Cerebellar Hemisphere	NA
+Ectoderm	Brain - Cerebellum	NA
+Ectoderm	Brain - Cortex	NA
+Ectoderm	Brain - Frontal Cortex (BA9)	NA
+Ectoderm	Brain - Hippocampus	NA
+Ectoderm	Brain - Hypothalamus	NA
+Ectoderm	Brain - Nucleus accumbens (basal ganglia)	NA
+Ectoderm	Brain - Putamen (basal ganglia)	NA
+Ectoderm	Brain - Spinal cord (cervical c-1)	NA
+Ectoderm	Brain - Substantia nigra	NA
+Ectoderm	Minor Salivary Gland	NA
+Ectoderm	Nerve - Tibial	NA
+Ectoderm	Pituitary	NA
+Ectoderm	Skin - Not Sun Exposed (Suprapubic)	NA
+Ectoderm	Skin - Sun Exposed (Lower leg)	NA
+Endoderm	Colon - Sigmoid	NA
+Endoderm	Colon - Transverse	NA
+Endoderm	Esophagus - Gastroesophageal Junction	NA
+Endoderm	Esophagus - Mucosa	NA
+Endoderm	Liver	NA
+Endoderm	Lung	NA
+Endoderm	Pancreas	NA
+Endoderm	Small Intestine - Terminal Ileum	NA
+Endoderm	Stomach	NA
+Endoderm	Thyroid	NA
+Mesoderm	Adipose - Subcutaneous	NA
+Mesoderm	Adipose - Visceral (Omentum)	NA
+Mesoderm	Adrenal Gland	NA
+Mesoderm	Artery - Aorta	NA
+Mesoderm	Artery - Coronary	NA
+Mesoderm	Artery - Tibial	NA
+Mesoderm	Breast - Mammary Tissue	NA
+Mesoderm	Esophagus - Muscularis	NA
+Mesoderm	Heart - Atrial Appendage	NA
+Mesoderm	Heart - Left Ventricle	NA
+Mesoderm	Kidney - Cortex	NA
+Mesoderm	Muscle - Skeletal	NA
+Mesoderm	Whole Blood	NA

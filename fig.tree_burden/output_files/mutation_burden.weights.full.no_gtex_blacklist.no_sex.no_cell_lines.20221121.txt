@@ -1,0 +1,70 @@
+edge_head	edge_tail	edge_mutation_weight
+Zygote	Gastrula	0.18602201035217
+Gastrula	Mesoderm	0.0500370474391694
+Gastrula	Endoderm	0.0255412528150522
+Gastrula	Ectoderm	0.0183361498633741
+Mesoderm	Paraxial mesoderm	0.00450489296754811
+Paraxial mesoderm	Artery - Aorta	NA
+Paraxial mesoderm	Muscle - Skeletal	NA
+Mesoderm	Lateral plate mesoderm	0.0245107284760716
+Mesoderm	Intermediate mesoderm	NA
+Lateral plate mesoderm	Splanchnic mesoderm	0.0116622736878148
+Splanchnic mesoderm	Heart tube	0.0400467651432672
+Splanchnic mesoderm	Esophagus - Muscularis	NA
+Splanchnic mesoderm	Splanchnopleuric mesoderm	0.00199017192104932
+Splanchnopleuric mesoderm	Artery - Coronary	NA
+Splanchnopleuric mesoderm	Artery - Tibial	NA
+Heart tube	Heart - Atrial Appendage	NA
+Heart tube	Heart - Left Ventricle	NA
+Lateral plate mesoderm	White adipose depots	0.0527123836352662
+White adipose depots	Adipose - Visceral (Omentum)	NA
+White adipose depots	Subcutaneous	0.010759308401172
+Lateral plate mesoderm	Whole Blood	NA
+Subcutaneous	Adipose - Subcutaneous	NA
+Subcutaneous	Breast - Mammary Tissue	NA
+Endoderm	Foregut	0.0231483016280766
+Endoderm	Midgut	0.0487469650366581
+Endoderm	Colon - Sigmoid	NA
+Foregut	Laryngotracheal diverticulum	0.00182331788506239
+Foregut	Duodenum (proximal)	0.00193255919902567
+Foregut	Stomach	NA
+Foregut	Thyroid	NA
+Laryngotracheal diverticulum	Esophagus - Gastroesophageal Junction	NA
+Laryngotracheal diverticulum	Esophagus - Mucosa	NA
+Laryngotracheal diverticulum	Lung	NA
+Duodenum (proximal)	Liver	NA
+Duodenum (proximal)	Pancreas	NA
+Midgut	Colon - Transverse	NA
+Midgut	Small Intestine - Terminal Ileum	NA
+Intermediate mesoderm	Adrenal Gland	NA
+Intermediate mesoderm	Kidney - Cortex	NA
+Ectoderm	Surface ectoderm	0.0103006724779177
+Ectoderm	Neural ectoderm	0.226991355705901
+Surface ectoderm	Skin	0.00150675482449473
+Skin	Skin - Sun Exposed (Lower leg)	NA
+Skin	Skin - Not Sun Exposed (Suprapubic)	NA
+Surface ectoderm	Minor Salivary Gland	NA
+Neural ectoderm	Primitive spinal cord	NA
+Neural ectoderm	Forebrain	0.0516434153505226
+Neural ectoderm	Brain - Substantia nigra	NA
+Neural ectoderm	Hindbrain	0.0154884793238752
+Primitive spinal cord	Brain - Spinal cord (cervical c-1)	NA
+Primitive spinal cord	Nerve - Tibial	NA
+Forebrain	Diencephalon	0.000398061692344918
+Forebrain	Telencephalon	0.0544544200109491
+Diencephalon	Brain - Hypothalamus	NA
+Diencephalon	Pituitary	NA
+Telencephalon	Dorsal	0.010023817322583
+Telencephalon	Ventral	0.0859865592464544
+Dorsal	BA9 sample	NA
+BA9 sample	Brain - Cortex	NA
+Dorsal	Brain - Anterior cingulate cortex (BA24)	NA
+BA9 sample	Brain - Frontal Cortex (BA9)	NA
+Ventral	Brain - Hippocampus	NA
+Ventral	Basal ganglia	0.0414323355941799
+Ventral	Brain - Amygdala	NA
+Basal ganglia	Brain - Putamen (basal ganglia)	NA
+Basal ganglia	Brain - Caudate (basal ganglia)	NA
+Basal ganglia	Brain - Nucleus accumbens (basal ganglia)	NA
+Hindbrain	Brain - Cerebellum	NA
+Hindbrain	Brain - Cerebellar Hemisphere	NA
