@@ -16,13 +16,19 @@ output: html_notebook
 * In this analysis, self-reported ancestry is used for modeling mutation burden. We note that genetic ancestry is an imperfect measurement of genetic diversity and has several limitations (Lewis et al. Science 2022).  Additionally, the variable "RACE" is used for self-reported ancestry metadata.  The variable name was used to maintain consistency with the original metadata files from the GTEx consortium.
 
 ## Output files
-* `output_files/model_3.20210928.rds` = RDS of fitted model
+* `output_files/model.<model>.<date>.rds` = RDS of fitted model using model=mutation count as mutation burden model=mutation VAF sum as mutation burden
+* `output_files/<model>.tissue_ancestry_effects.african_american_vs_white.<date>.pdf` = regression coefficients for significant tissue-AA vs. EA interactions for each model
+* `output_files/<model>.tissue_ancestry_effects.asian_vs_white.<date>.pdf` = regression coefficients for significant tissue-AS vs. EA interactions for each model
+* `output_files/<model>.tissue_ancestry_effects.asian_vs_african_american.<date>2.pdf` = regression coefficients for significant tissue-AS vs. AE interactions for each model
+* `output_files/<model>.tissue_sex_effects.<date>.pdf` = regression coefficients for significant tissue-sex interactions for each model
+* `output_files/<model>.tissue_age_effects.<date>.pdf` = regression coefficients for significant tissue-age interactions for each model
 
 # Setup environment
 ```{r}
 library("ggplot2")
 library("gridExtra")
 library("car")
+library("grid")
 ```
 
 ```{r}
@@ -45,6 +51,11 @@ save_fig_bool = FALSE
 metadata = load_master_sample_metadata(local)
 metadata = metadata[metadata$is_hypermutated == 0,]
 
+# Calculate mutation burden as the sum as VAF in a sample
+# Since burden will be log-transformed; add a pseudocount (smallest non-zero vaf) to all samples
+vaf_sum_pseudocount = min(metadata$sample_vaf_sum[metadata$sample_vaf_sum > 0])
+metadata$sample_vaf_sum_pseudo = metadata$sample_vaf_sum + vaf_sum_pseudocount
+
 metadata_all_races = metadata
 # Use White as reference since it has the largest sample size
 metadata_all_races$RACE = factor(metadata_all_races$RACE, levels=c("White", "Black or African American", "Asian", "American Indian or Alaska Native", "Unknown"))
@@ -52,7 +63,13 @@ metadata_all_races$RACE = factor(metadata_all_races$RACE, levels=c("White", "Bla
 # American Indian or Alaska Native and Unknown categories have very small sample sizes
 metadata = metadata[! metadata$RACE %in% c("American Indian or Alaska Native", "Unknown"),]
 metadata$RACE = factor(metadata$RACE, levels=c("White", "Black or African American", "Asian"))
+
+# Change the factor levels to easily calculate coefficients for AA vs. Asian comparisons.
+# Use AA for reference since there are more AA in the cohort
+metadata_all_races_aa_ref = metadata_all_races
+metadata_all_races_aa_ref$RACE = metadata_all_races_aa_ref$RACE = factor(metadata_all_races$RACE, levels=c("Black or African American", "Asian", "American Indian or Alaska Native", "Unknown", "White"))
 ```
+
 
 ## Functions
 ```{r}
@@ -88,7 +105,7 @@ postprocess_glm <- function(t5) {
   return(list(pdat.age=pdat.age, pdat.sex=pdat.sex, pdat.ancestry=pdat.ancestry))
 }
 
-my_plot <- function(pdat.ancestry, i, mega_pdat.ancestry, reference_level, save_fig_bool, width, height, today, fig_dir) {
+my_plot <- function(pdat.ancestry, i, mega_pdat.ancestry, reference_level, save_fig_bool, width, height, today, fig_dir, model_name) {
     # Get the coordinates if these were plotted on the same axes
     p = ggplot(data=mega_pdat.ancestry, aes(y=tissue, x=Estimate, xmin=cil, xmax=ciu)) +
       geom_errorbarh(height=0) + 
@@ -104,7 +121,7 @@ my_plot <- function(pdat.ancestry, i, mega_pdat.ancestry, reference_level, save_
     tmp$tissue = factor(tmp$tissue, levels=tmp$tissue)
   
     if (save_fig_bool) {
-      fn = sanitize_var_for_fn(file.path(fig_dir, sprintf("figure_1.tissue_ancestry_effects.%s_vs_%s.%s.pdf", i, reference_level, today)))
+      fn = sanitize_var_for_fn(file.path(fig_dir, sprintf("%s.tissue_ancestry_effects.%s_vs_%s.%s.pdf", model_name, i, reference_level, today)))
       pdf(fn, width=width, height=height)
     }
     
@@ -138,7 +155,7 @@ my_plot <- function(pdat.ancestry, i, mega_pdat.ancestry, reference_level, save_
   return()
 }
 
-plot_sex <- function(t5, is_transformed) {
+plot_sex <- function(t5, is_transformed, save_fig_bool, width, height, today, fig_dir, model_name) {
   tmp = t5$pdat.sex
   tmp = tmp[with(tmp, order(Estimate)),]
   tmp$tissue = factor(tmp$tissue, levels=tmp$tissue)
@@ -152,8 +169,8 @@ plot_sex <- function(t5, is_transformed) {
   }
   
   if (save_fig_bool) {
-    fn = sanitize_var_for_fn(file.path(fig_dir, sprintf("figure_1.tissue_sex_effects%s.%s.pdf", suffix, today)))
-    pdf(fn, width=5.25, height=3)
+    fn = sanitize_var_for_fn(file.path(fig_dir, sprintf("%s.tissue_sex_effects%s.%s.pdf", model_name, suffix, today)))
+    pdf(fn, width=width, height=height)
   }
   
   p = ggplot(data=tmp, aes(y=tissue, x=Estimate, xmin=cil, xmax=ciu)) +
@@ -180,19 +197,110 @@ plot_sex <- function(t5, is_transformed) {
   
   grid.draw(p2)
 }
+
+plot_age <- function(t5, save_fig_bool, width, height, today, fig_dir, model_name) {
+  tmp = t5$pdat.age
+  tmp = tmp[with(tmp, order(Estimate)),]
+  tmp$tissue = factor(tmp$tissue, levels=tmp$tissue)
+  
+  if (save_fig_bool) {
+    fn = sanitize_var_for_fn(file.path(fig_dir, sprintf("%s.tissue_age_effects.%s.pdf", model_name, today)))
+    pdf(fn, width=width, height=height)
+  }
+  
+  p = ggplot(data=tmp, aes(y=tissue, x=Estimate, xmin=cil, xmax=ciu)) +
+    geom_errorbarh(height=0) + 
+    geom_point(aes(fill=tissue), size=2.5, shape=21, col="black") +
+    tissue_palette$fill_scale +
+    geom_vline(xintercept=0,color="black",linetype="dashed") +  
+    xlab("Beta") +
+    ylab("Tissue") +
+    my_theme() +
+    theme(panel.spacing = unit(1, "lines"),
+          legend.position = "none",
+          text=element_text(size=14),
+          panel.grid=element_blank(),
+          strip.background = element_blank(),
+          plot.margin = margin(5.5, 10, 5.5, 5.5, unit="pt"))
+  grid.newpage()
+  p2 = timestamp_ggfigure(p)
+  grid.draw(p2)
+  
+  if (save_fig_bool) {
+    dev.off()
+    write_new_file_message(fn)
+  }
+  
+  grid.draw(p2)
+}
+
+plot_f <- function(ares, save_fig_bool, width, height, today, fig_dir, model_name) {
+  # Sort by decreasing F statusitic
+  fdat = ares[order(ares[,3],decreasing=T),]
+  
+  # Remove residuals
+  fdat = fdat[-nrow(fdat),]
+  
+  fdat = as.data.frame(fdat)
+  fdat$variable = rownames(fdat)
+  
+  # Use read friendly variable names
+  fdat$variable = revalue(fdat$variable, 
+    c("avg_simulated_var_power"="Sample mutation power", 
+      "AGE"="Age",
+      "SMTSD"="Tissue",
+      "num_mbp_w_ge20X"="Transcriptome size",
+      "SMTSD:AGE"="Tissue:age",
+      "SMRIN"="RIN",
+      "SEX"="Sex",
+      "SMNABTCH"="Batch",
+      "genotype_data"="Genotype data",
+      "SMTSD:RACE"="Tissue:ancestry",
+      "SMTSD:SEX"="Tissue:sex",
+      "RACE"="Ancestry"))
+  
+  fdat$variable = factor(fdat$variable, levels=fdat$variable)
+  
+  if (save_fig_bool) {
+    fn = file.path(fig_dir, sprintf("%s.covariate_f_statistics.%s.pdf", model_name, today))
+    pdf(fn, width=width, height=height)
+  }
+  p = ggplot(fdat, aes(x=variable, y=`F value`)) +
+    geom_col(fill="black") +
+    my_theme() +
+    theme_classic() +
+    theme(text=element_text(size=12),
+          plot.margin = margin(5.5, 10, 5., 5.5, unit="pt")) + # x-axis was being cut off on right-hand side
+    coord_flip() +
+    xlab("Covariate") +
+    ylab("F value")
+  grid.newpage()
+  p2 = timestamp_ggfigure(p)
+  grid.draw(p2)
+  
+  if (save_fig_bool) {
+    dev.off()
+    write_new_file_message(fn)
+  }
+  
+  grid.draw(p2)
+}
 ```
 
 # Model mutation burden
-## Fit model
+## Mutation burden = # of PZMs in sample
+### Fit model
 ```{r}
-fit3.1 = lm(log10(num_em_var + 1) ~ SMRIN + SMTSD + SMNABTCH + AGE + RACE + SEX + genotype_data + num_mbp_w_ge20X + avg_simulated_var_power + RACE*SMTSD + SEX*SMTSD + AGE*SMTSD, data=metadata_all_races)
+model_name = "count_mutation_burden"
 
-# Change the factor levels to easily calculate coefficients for AA vs. Asian comparisons.
-# Use AA for reference since there are more AA in the cohort
-metadata_all_races_aa_ref = metadata_all_races
-metadata_all_races_aa_ref$RACE = metadata_all_races_aa_ref$RACE = factor(metadata_all_races$RACE, levels=c("Black or African American", "Asian", "American Indian or Alaska Native", "Unknown", "White"))
+# These lm calls take a few minutes to run
+fit3.1 = lm(log10(num_em_var + 1) ~ SMRIN + SMTSD + SMNABTCH + AGE + RACE + SEX + genotype_data + num_mbp_w_ge20X + avg_simulated_var_power + RACE:SMTSD + SEX:SMTSD + AGE:SMTSD, data=metadata_all_races)
 
-fit3.1_aa = lm(log10(num_em_var + 1) ~ SMRIN + SMTSD + SMNABTCH + AGE + RACE + SEX + genotype_data + num_mbp_w_ge20X + avg_simulated_var_power + RACE*SMTSD + SEX*SMTSD + AGE*SMTSD, data=metadata_all_races_aa_ref)
+fit3.1_aa = lm(log10(num_em_var + 1) ~ SMRIN + SMTSD + SMNABTCH + AGE + RACE + SEX + genotype_data + num_mbp_w_ge20X + avg_simulated_var_power + RACE:SMTSD + SEX:SMTSD + AGE:SMTSD, data=metadata_all_races_aa_ref)
+```
+
+```{r}
+summary(fit3.1)
 ```
 
 
@@ -203,71 +311,20 @@ ares = Anova(fit3.1,type="II") # This takes ~15 minutes to run
 
 ```{r}
 # Save 
-output_file = file.path(output_dir, sprintf("model_3.%s.rds", today))
+output_file = file.path(output_dir, sprintf("model.%s.%s.rds", model_name, today))
 saveRDS(fit3.1, file=output_file)
 write_new_file_message(output_file)
 ```
 
 
-## Plot
-### Plot F statistics
-```{r}
-# Sort by decreasing F statusitic
-fdat = ares[order(ares[,3],decreasing=T),]
-
-# Remove residuals
-fdat = fdat[-nrow(fdat),]
-
-fdat = as.data.frame(fdat)
-fdat$variable = rownames(fdat)
-
-# Use read friendly variable names
-fdat$variable = revalue(fdat$variable, 
-  c("avg_simulated_var_power"="Sample mutation power", 
-    "AGE"="Age",
-    "SMTSD"="Tissue",
-    "num_mbp_w_ge20X"="Transcriptome size",
-    "SMTSD:AGE"="Tissue:age",
-    "SMRIN"="RIN",
-    "SEX"="Sex",
-    "SMNABTCH"="Batch",
-    "genotype_data"="Genotype data",
-    "SMTSD:RACE"="Tissue:ancestry",
-    "SMTSD:SEX"="Tissue:sex",
-    "RACE"="Ancestry"))
-
-fdat$variable = factor(fdat$variable, levels=fdat$variable)
-```
-
-
+### Plot
+#### Plot F statistics
 ```{r, fig.height=3, fig.width=4}
-if (save_fig_bool) {
-  fn = file.path(fig_dir, sprintf("figure_1.covariate_f_statistics.%s.pdf", today))
-  pdf(fn, width=4, height=3)
-}
-p = ggplot(fdat, aes(x=variable, y=`F value`)) +
-  geom_col(fill="black") +
-  my_theme() +
-  theme_classic() +
-  theme(text=element_text(size=12),
-        plot.margin = margin(5.5, 10, 5., 5.5, unit="pt")) + # x-axis was being cut off on right-hand side
-  coord_flip() +
-  xlab("Covariate") +
-  ylab("F value")
-grid.newpage()
-p2 = timestamp_ggfigure(p)
-grid.draw(p2)
-
-if (save_fig_bool) {
-  dev.off()
-  write_new_file_message(fn)
-}
-
-grid.draw(p2)
+plot_f(ares)
 ```
 
 
-### Plot tissue interaction betas
+#### Plot tissue interaction betas
 ```{r}
 t2 = summary(fit3.1)
 # AA vs. asian comparison
@@ -292,62 +349,30 @@ mega_pdat.ancestry = rbind(
   t5_aa$pdat.ancestry[t5_aa$pdat.ancestry$type_pretty == "Asian",])
 ```
 
-#### Ancestry
+##### Ancestry
 ```{r, fig.height=2, fig.width=5}
-my_plot(t5_white$pdat.ancestry, i="African American", mega_pdat.ancestry, "White", save_fig_bool=save_fig_bool, width=5, height=2, today, fig_dir)
+my_plot(t5_white$pdat.ancestry, i="African American", mega_pdat.ancestry, reference_level="White", save_fig_bool=save_fig_bool, width=5, height=2, today=today, fig_dir=fig_dir, model_name=model_name)
 ```
 
 ```{r, fig.height=3.5, fig.width=5}
-p2 = my_plot(t5_white$pdat.ancestry, i="Asian", mega_pdat.ancestry, "White", save_fig_bool=save_fig_bool, width=5, height=3.5, today, fig_dir)
+p2 = my_plot(t5_white$pdat.ancestry, i="Asian", mega_pdat.ancestry, reference_level="White", save_fig_bool=save_fig_bool, width=5, height=3.5, today=today, fig_dir=fig_dir, model_name=model_name)
 ```
 
 ```{r, fig.height=2.75, fig.width=5}
-p2 = my_plot(t5_aa$pdat.ancestry, i="Asian", mega_pdat.ancestry, "African American", save_fig_bool=save_fig_bool, width=5, height=2.75, today, fig_dir)
+p2 = my_plot(t5_aa$pdat.ancestry, i="Asian", mega_pdat.ancestry, reference_level="African American", save_fig_bool=save_fig_bool, width=5, height=2.75, today=today, fig_dir=fig_dir, model_name=model_name)
 ```
 
-#### Sex
+##### Sex
 ```{r, fig.height=3, fig.width=5.25}
-plot_sex(t5_white, is_transformed=FALSE)
+plot_sex(t5_white, is_transformed=FALSE, save_fig_bool=save_fig_bool, width=5.25, height=3, today=today, fig_dir=fig_dir, model_name=model_name)
 ```
 
-#### Age
-```{r, fig.height=4, fig.width=5}
-tmp = t5_white$pdat.age
-tmp = tmp[with(tmp, order(Estimate)),]
-tmp$tissue = factor(tmp$tissue, levels=tmp$tissue)
-
-if (save_fig_bool) {
-  fn = sanitize_var_for_fn(file.path(fig_dir, sprintf("figure_1.tissue_age_effects.%s.pdf", today)))
-  pdf(fn, width=5, height=4)
-}
-
-p = ggplot(data=tmp, aes(y=tissue, x=Estimate, xmin=cil, xmax=ciu)) +
-  geom_errorbarh(height=0) + 
-  geom_point(aes(fill=tissue), size=2.5, shape=21, col="black") +
-  tissue_palette$fill_scale +
-  geom_vline(xintercept=0,color="black",linetype="dashed") +  
-  xlab("Beta") +
-  ylab("Tissue") +
-  my_theme() +
-  theme(panel.spacing = unit(1, "lines"),
-        legend.position = "none",
-        text=element_text(size=14),
-        panel.grid=element_blank(),
-        strip.background = element_blank(),
-        plot.margin = margin(5.5, 10, 5.5, 5.5, unit="pt"))
-grid.newpage()
-p2 = timestamp_ggfigure(p)
-grid.draw(p2)
-
-if (save_fig_bool) {
-  dev.off()
-  write_new_file_message(fn)
-}
-
-grid.draw(p2)
+##### Age
+```{r}
+plot_age(t5_white, save_fig_bool=save_fig_bool, width=5, height=4, today=today, fig_dir=fig_dir, model_name=model_name)
 ```
 
-# Estimate % of donor variance explained
+### Estimate % of donor variance explained
 ```{r}
 # Run repeatability estimation from generlized linear mixed-effects models fitted by restricted maximum likelihood using rptR's rpt function
 # rpt was run in parallel on a cluster to decrease the amount of wall clock time.  See input_files/get_rpt_estimates.R.
@@ -407,7 +432,7 @@ donor_variance_df$dataset_pretty = sprintf("%s\nN = %d", donor_variance_df$datas
 donor_variance_df$dataset_pretty = factor(donor_variance_df$dataset_pretty, levels=unique(donor_variance_df$dataset_pretty))
 ```
 
-## Plot
+#### Plot
 ```{r, fig.height=3, fig.width=3}
 if (save_fig_bool) {
   fn = file.path(fig_dir, sprintf("figure_1.donor_variance_explained.%s.pdf", today))
@@ -440,4 +465,84 @@ if (save_fig_bool) {
 grid.draw(p2)
 ```
 
+## Mutation burden = VAF sum
+### Fit model
+```{r}
+model_name = "vaf_sum_mutation_burden"
 
+# These lm calls take a few minutes to run
+fit4 = lm(log10(sample_vaf_sum_pseudo) ~ SMRIN + SMTSD + SMNABTCH + AGE + RACE + SEX + genotype_data + num_mbp_w_ge20X + avg_simulated_var_power + RACE:SMTSD + SEX:SMTSD + AGE:SMTSD, data=metadata_all_races)
+
+# Change the factor levels to easily calculate coefficients for AA vs. Asian comparisons.
+fit4_aa = lm(log10(sample_vaf_sum_pseudo) ~ SMRIN + SMTSD + SMNABTCH + AGE + RACE + SEX + genotype_data + num_mbp_w_ge20X + avg_simulated_var_power + RACE:SMTSD + SEX:SMTSD + AGE:SMTSD, data=metadata_all_races_aa_ref)
+```
+
+```{r}
+summary(fit4)
+```
+
+```{r}
+# Get f values from fitted GLM
+ares4 = Anova(fit4,type="II") # This takes ~15 minutes to run
+```
+
+```{r}
+# Save 
+output_file = file.path(output_dir, sprintf("model.%s.%s.rds", model_name, today))
+saveRDS(fit4, file=output_file)
+write_new_file_message(output_file)
+```
+
+### Plot
+#### Plot F statistics
+```{r, fig.height=3, fig.width=4}
+plot_f(ares4)
+```
+
+#### Plot tissue interaction betas
+```{r}
+t2 = summary(fit4)
+# AA vs. asian comparison
+t2_aa = summary(fit4_aa)
+
+t3 = t2$coefficients
+t4 = t3[grep(":",rownames(t3)),]
+t5_unprocessed = t4[which(t4[,4] <= 0.05),]
+row.names(t5_unprocessed)<-row.names(t4)[which(t4[,4] <= 0.05)]
+
+t3_aa = t2_aa$coefficients
+t4_aa = t3_aa[grep(":",rownames(t3_aa)),]
+t5_aa_unprocessed = t4_aa[which(t4_aa[,4] <= 0.05),]
+row.names(t5_aa_unprocessed)<-row.names(t4_aa)[which(t4_aa[,4] <= 0.05)]
+
+t5_white = postprocess_glm(t5_unprocessed)
+
+t5_aa = postprocess_glm(t5_aa_unprocessed)
+
+mega_pdat.ancestry = rbind(
+  t5_white$pdat.ancestry[! t5_white$pdat.ancestry$type_pretty %in% c("Unknown", "American Indian or Alaska Native"),],
+  t5_aa$pdat.ancestry[t5_aa$pdat.ancestry$type_pretty == "Asian",])
+```
+
+##### Ancestry
+```{r, fig.height=2, fig.width=5}
+my_plot(t5_white$pdat.ancestry, i="African American", mega_pdat.ancestry, reference_level="White", save_fig_bool=save_fig_bool, width=5, height=2, today=today, fig_dir=fig_dir, model_name=model_name)
+```
+
+```{r, fig.height=3.5, fig.width=5}
+p2 = my_plot(t5_white$pdat.ancestry, i="Asian", mega_pdat.ancestry, reference_level="White", save_fig_bool=save_fig_bool, width=5, height=3.5, today=today, fig_dir=fig_dir, model_name=model_name)
+```
+
+```{r, fig.height=2.75, fig.width=5}
+p2 = my_plot(t5_aa$pdat.ancestry, i="Asian", mega_pdat.ancestry, reference_level="African American", save_fig_bool=save_fig_bool, width=5, height=2.75, today=today, fig_dir=fig_dir, model_name=model_name)
+```
+
+##### Sex
+```{r, fig.height=3, fig.width=5.25}
+plot_sex(t5_white, is_transformed=FALSE, save_fig_bool=save_fig_bool, width=5.25, height=3, today=today, fig_dir=fig_dir, model_name=model_name)
+```
+
+##### Age
+```{r}
+plot_age(t5_white, save_fig_bool=save_fig_bool, width=5, height=4, today=today, fig_dir=fig_dir, model_name=model_name)
+```
