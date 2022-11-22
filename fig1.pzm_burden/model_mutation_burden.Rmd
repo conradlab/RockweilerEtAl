@@ -35,10 +35,12 @@ local = 2
 tissue_palette = create_tissue_palette(local)
 today = get_todays_date()
 
+input_dir = "input_files"
+output_dir = "output_files"
+fig_dir = output_dir
+
 save_fig_bool = FALSE
 # save_fig_bool = TRUE
-
-fig_dir = "figs/"
 
 metadata = load_master_sample_metadata(local)
 metadata = metadata[metadata$is_hypermutated == 0,]
@@ -201,7 +203,7 @@ ares = Anova(fit3.1,type="II") # This takes ~15 minutes to run
 
 ```{r}
 # Save 
-output_file = sprintf("output_files/model_3.%s.rds", today)
+output_file = file.path(output_dir, sprintf("model_3.%s.rds", today))
 saveRDS(fit3.1, file=output_file)
 write_new_file_message(output_file)
 ```
@@ -348,8 +350,8 @@ grid.draw(p2)
 # Estimate % of donor variance explained
 ```{r}
 # Run repeatability estimation from generlized linear mixed-effects models fitted by restricted maximum likelihood using rptR's rpt function
-# rpt was run in parallel on a cluster to decrease the amount of wall clock time.  See preprocess_steps/get_rpt_estimates.R.
-rdat_fn = "preprocess_steps/repeat_estimates.20210928.Rdata"
+# rpt was run in parallel on a cluster to decrease the amount of wall clock time.  See input_files/get_rpt_estimates.R.
+rdat_fn = file.path(input_dir, "repeat_estimates.20210928.Rdata")
 load(rdat_fn) # Loads rpt_combined_races, rpt_individual_races
 
 # Grab data
