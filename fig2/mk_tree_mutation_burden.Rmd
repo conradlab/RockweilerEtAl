@@ -1,0 +1,249 @@
+---
+title: "Make tree mutation burden figure"
+output: html_notebook
+---
+
+# Metadata
+* **Last modified:** `r format(Sys.time(), "%Y%m%d")`
+
+## Purpose
+* Plot mutation burden on full tissue tree (log-scaled weights) and germ layer tree (raw weights)
+* Create a table of edge weights (full tissue and germ layer trees)
+* Plot predominant mutation type on full tree and germ layer trees
+* Plot var type distribution for each parent-sibling group and test for differences among spatial and temportal dimensions
+
+
+# Setup environment
+```{r}
+library(XNomial)
+library(MASS)
+```
+
+
+```{r}
+source("../tree_utils.R")
+source("../utils.R")
+source("../fig.tree_burden/mk_tree_mutation_burden.functions.R")
+```
+## Globals
+```{r}
+local = 2
+today = "final" # get_todays_date()
+fig_dir = "output_files/"
+save_file = FALSE
+#save_file = TRUE
+
+vartype_palette = create_vartype_palette(local)
+vartype_palette_df = load_vartype_colors(local)
+
+compressed_var = names(generate_compressed_var()$compressed2uncompressed)
+
+var_types_lookup = generate_compressed_var()$uncompressed2compressed
+```
+
+# Full tree
+```{r}
+tree_name = "full.no_gtex_blacklist.no_sex.no_cell_lines"
+consensus_g_fn = "../fig.tree_burden/input_files/consensus_g.power_adjusted_weights.exact_match.full.no_gtex_blacklist.no_sex.no_cell_lines.20200714.rds"
+mutation_type_dist_fn = "input_files/var_type_distribution.power_adjusted_weights.exact_match.full.no_gtex_blacklist.no_sex.no_cell_lines.20200714.rds"
+edge_indexes_to_exclude = c(9, 46, 58)
+
+tmp = load_data(tree_name, consensus_g_fn, local, edge_indexes_to_exclude)
+
+tissue_g = tmp$tissue_g
+consensus_g = tmp$consensus_g
+leaves = tmp$leaves
+non_leaf_edge_indexes = tmp$non_leaf_edge_indexes
+distance_from_root = tmp$distance_from_root
+mutation_vector_str2edge = tmp$mutation_vector_str2edge
+```
+
+## Mutation burden
+### Log-scaled weights
+```{r, fig.width=20, fig.height=20}
+fn = file.path(fig_dir, sprintf("mutation_burden.no_labels.log_weights.%s.%s.pdf", tree_name, today))
+
+if (save_file) {
+    pdf(fn, width=20, height=20)
+}
+consensus_g_log_weights = plot_g(consensus_g, type="mutation_prob", category="numeric", save_file=FALSE, set_na_colors = TRUE, set_widths=FALSE, diverging_palette=FALSE, set_edge_labels=FALSE, na_color="grey", edge_label_color="black", set_vertex_labels=FALSE, use_log_trans = TRUE, pseudo_count = 0)
+full_tree_consensus_g_log_weights = consensus_g_log_weights
+if (save_file) {
+    dev.off()
+    write_new_file_message(fn)
+}
+```
+
+```{r}
+# Get range of mutation weights
+unknown_weights = E(consensus_g)$weight_unknown
+edge_mutation_weights = E(consensus_g)$mutation_prob
+woi = edge_mutation_weights[! unknown_weights]
+writeLines(sprintf("min weight = %.1E", min(woi)))
+writeLines(sprintf("max weight = %.1E", max(woi)))
+
+writeLines(sprintf("top 2 edges have %.2f of the weight", sum(sort(woi, decreasing = TRUE)[1:2])))
+writeLines(sprintf("top 3 edges have %.2f of the weight", sum(sort(woi, decreasing = TRUE)[1:3])))
+```
+
+```{r}
+top_woi = sort(edge_mutation_weights, decreasing = TRUE, index.return=TRUE)$ix[1:3]
+E(consensus_g)[top_woi]
+```
+
+Make a color bar
+```{r, fig.height=7, fig.width=2}
+fn = file.path(fig_dir, sprintf("mutation_burden.no_labels.log.weights.%s.color_bar.%s.pdf", tree_name, today))
+mk_color_bar(consensus_g_log_weights, fn, log_trans=TRUE, percent=TRUE, save_file=save_file)
+```
+
+### Create a table of edge weights
+```{r}
+unknown_weights = E(consensus_g)$weight_unknown
+edge_mutation_weights = E(consensus_g)$mutation_prob
+
+edge_weight_df = as.data.frame(ends(consensus_g, E(consensus_g), names=TRUE))
+colnames(edge_weight_df) = c("edge_head", "edge_tail")
+edge_weight_df$edge_mutation_weight = edge_mutation_weights
+edge_weight_df$edge_mutation_weight[unknown_weights] = NA
+```
+
+```{r}
+# # Run 1X on 20220629
+# output_fn = file.path(fig_dir, sprintf("mutation_burden.weights.%s.%s.txt", tree_name, today))
+# write.table(edge_weight_df, file=output_fn, row.names=FALSE, quote=FALSE, sep="\t")
+# write_new_file_message(output_fn)
+```
+
+## Mutation type
+```{r}
+tmp = load_mutation_type_data(mutation_type_dist_fn, mutation_vector_str2edge, edge_indexes_to_exclude)
+
+mutation_type_dist = tmp$mutation_type_dist
+mutation_type_dist_melt = tmp$mutation_type_dist_melt
+mutation_type_dist_filtered = tmp$mutation_type_dist_filtered
+```
+
+
+### Test for differences in mutation type distributions across edges
+```{r}
+compare_mut_type_between_edges_df = compare_mutation_type_distributions_in_tree(mutation_type_dist, mutation_vector_str2edge, "mc_multinomial", leaves$leaf_names, compressed_var)
+```
+
+
+```{r, fig.width=10, fig.height=4}
+plot_mutation_type_distribution_comparisons(mutation_type_dist_melt, distance_from_root, tree_name, today, fig_dir, save_file=save_file)
+```
+
+### Test for predomiant mutation type within an edge
+```{r}
+predominant_edge_df = test_if_predominant_type_exists(mutation_type_dist, compressed_var)
+```
+
+```{r, fig.width=20, fig.height=20}
+fn = file.path(fig_dir, sprintf("mutation_type_distribution.predominant_type.%s.%s.pdf", tree_name, today))
+if (save_file) {
+    pdf(fn, width=20, height=20)
+}
+plot_predominant_mutation_type(predominant_edge_df, consensus_g, vartype_palette_df)
+
+if (save_file) {
+    dev.off()
+    write_new_file_message(fn)
+}
+```
+
+# Germ layer tree
+```{r}
+tree_name = "germ_layers"
+consensus_g_fn = "../fig.tree_burden/input_files/consensus_g.power_adjusted_weights.exact_match.germ_layers.20200715.rds"
+mutation_type_dist_fn = "input_files/var_type_distribution.power_adjusted_weights.exact_match.germ_layers.20200715.rds"
+edge_indexes_to_exclude = c()
+
+tmp = load_data(tree_name, consensus_g_fn, local, edge_indexes_to_exclude)
+
+tissue_g = tmp$tissue_g
+consensus_g = tmp$consensus_g
+leaves = tmp$leaves
+non_leaf_edge_indexes = tmp$non_leaf_edge_indexes
+distance_from_root = tmp$distance_from_root
+mutation_vector_str2edge = tmp$mutation_vector_str2edge
+```
+
+## Mutation burden
+### Raw weights
+```{r, fig.width=20, fig.height=20}
+fn = file.path(fig_dir, sprintf("mutation_burden.no_labels.raw_weights.%s.%s.pdf", tree_name, today))
+
+if (save_file) {
+    pdf(fn, width=20, height=20)
+}
+consensus_g_raw_weights = plot_g(consensus_g, type="mutation_prob", category="numeric", save_file=FALSE, set_na_colors = TRUE, set_widths=FALSE, diverging_palette=FALSE, set_edge_labels=FALSE, na_color="grey", edge_label_color="black", set_vertex_labels=FALSE, use_log_trans = FALSE, pseudo_count = 0)
+germ_layer_tree_consensus_g_raw_weights = consensus_g_raw_weights
+if (save_file) {
+    dev.off()
+    write_new_file_message(fn)
+}
+```
+
+Make a color bar
+```{r, fig.height=7, fig.width=2}
+fn = file.path(fig_dir, sprintf("mutation_burden.no_labels.raw_weights.%s.color_bar.%s.pdf", tree_name, today))
+mk_color_bar(consensus_g_raw_weights, fn, log_trans=FALSE, percent=TRUE, save_file=save_file)
+```
+
+### Create a table of edge weights
+```{r}
+unknown_weights = E(consensus_g)$weight_unknown
+edge_mutation_weights = E(consensus_g)$mutation_prob
+
+edge_weight_df = as.data.frame(ends(consensus_g, E(consensus_g), names=TRUE))
+colnames(edge_weight_df) = c("edge_head", "edge_tail")
+edge_weight_df$edge_mutation_weight = edge_mutation_weights
+edge_weight_df$edge_mutation_weight[unknown_weights] = NA
+```
+
+```{r}
+# # Run 1X on 20220629
+# output_fn = file.path(fig_dir, sprintf("mutation_burden.weights.%s.%s.txt", tree_name, today))
+# write.table(edge_weight_df, file=output_fn, row.names=FALSE, quote=FALSE, sep="\t")
+# write_new_file_message(output_fn)
+```
+
+## Mutation type
+```{r}
+tmp = load_mutation_type_data(mutation_type_dist_fn, mutation_vector_str2edge, edge_indexes_to_exclude)
+
+mutation_type_dist = tmp$mutation_type_dist
+mutation_type_dist_melt = tmp$mutation_type_dist_melt
+mutation_type_dist_filtered = tmp$mutation_type_dist_filtered
+```
+
+### Test for differences in mutation type distributions across edges
+```{r}
+compare_mut_type_between_edges_df = compare_mutation_type_distributions_in_tree(mutation_type_dist, mutation_vector_str2edge, "mc_multinomial", leaves$leaf_names, compressed_var)
+```
+
+
+```{r, fig.width=3, fig.height=4}
+plot_mutation_type_distribution_comparisons(mutation_type_dist_melt, distance_from_root, tree_name, today, fig_dir, save_file=save_file, width=3, height=4)
+```
+
+
+### Test for predomiant mutation type within an edge
+```{r}
+predominant_edge_df = test_if_predominant_type_exists(mutation_type_dist, compressed_var)
+```
+
+```{r, fig.width=20, fig.height=20}
+fn = file.path(fig_dir, sprintf("mutation_type_distribution.predominant_type.%s.%s.pdf", tree_name, today))
+if (save_file) {
+    pdf(fn, width=20, height=20)
+}
+plot_predominant_mutation_type(predominant_edge_df, consensus_g, vartype_palette_df)
+
+if (save_file) {
+    dev.off()
+    write_new_file_message(fn)
+}
+```
