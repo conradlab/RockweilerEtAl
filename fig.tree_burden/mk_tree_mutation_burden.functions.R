@@ -1,3 +1,4 @@
+
 load_mutation_type_data <- function(mutation_type_dist_fn, mutation_vector_str2edge, edge_indexes_to_exclude, min_raw_mutations_per_edge=5) {
     
     mutation_type_dist = readRDS(mutation_type_dist_fn)
@@ -15,7 +16,7 @@ load_mutation_type_data <- function(mutation_type_dist_fn, mutation_vector_str2e
     
     writeLines(sprintf("Requiring at least %d mutations on an edge removed %d/%d (%.1f%%) edges", min_raw_mutations_per_edge, nrow_removed, nrow_before, nrow_removed/nrow_before *100))
     
-    mutation_type_dist_melt = melt(mutation_type_dist_filtered, measure.vars=compressed_var)
+    mutation_type_dist_melt = reshape2::melt(mutation_type_dist_filtered, measure.vars=compressed_var)
     
     return(list(mutation_type_dist=mutation_type_dist, mutation_type_dist_filtered=mutation_type_dist_filtered, mutation_type_dist_melt=mutation_type_dist_melt))
 }
@@ -336,7 +337,7 @@ test_if_equal_counts <- function(mutation_type_dist, compressed_var, sig_thresho
     failed_df = mutation_type_dist_counts[! mutation_type_dist_counts$is_sig.multinomial,]
     
     
-    step2_melt_df = melt(step2_df, measure.vars = compressed_var)
+    step2_melt_df = reshape2::melt(step2_df, measure.vars = compressed_var)
     
     
     # mapply for the win!
@@ -352,7 +353,7 @@ test_if_equal_counts <- function(mutation_type_dist, compressed_var, sig_thresho
     
     # Merge with the edges that had a uniform distribution
     if (nrow(failed_df) > 0) {
-        failed_melt_df = melt(failed_df, measure.vars = compressed_var)
+        failed_melt_df = reshape2::melt(failed_df, measure.vars = compressed_var)
         failed_melt_df$p_value.binomial = NA
         failed_melt_df$q_value.binomial = NA
         failed_melt_df$is_sig.binomial = NA
