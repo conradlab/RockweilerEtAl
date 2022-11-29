@@ -1,0 +1,3 @@
+[submodule "Lachesis/submodules/gtex-pipeline"]
+	path = Lachesis/submodules/gtex-pipeline
+	url = https://github.com/nrockweiler/gtex-pipeline
