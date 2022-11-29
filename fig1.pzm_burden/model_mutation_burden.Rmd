@@ -29,6 +29,7 @@ library("ggplot2")
 library("gridExtra")
 library("car")
 library("grid")
+library("plyr")
 ```
 
 ```{r}
@@ -39,7 +40,8 @@ source("../utils.R")
 ```{r}
 local = 2
 tissue_palette = create_tissue_palette(local)
-today = get_todays_date()
+today = "final" # get_todays_date()
+orig_today = today # load() is called below which overwrites today.  Stash this variable so can update after the overwrite happens.
 
 input_dir = "input_files"
 output_dir = "output_files"
@@ -320,7 +322,7 @@ write_new_file_message(output_file)
 ### Plot
 #### Plot F statistics
 ```{r, fig.height=3, fig.width=4}
-plot_f(ares)
+plot_f(ares, save_fig_bool, width=4, height=3, today, fig_dir, model_name)
 ```
 
 
@@ -378,6 +380,7 @@ plot_age(t5_white, save_fig_bool=save_fig_bool, width=5, height=4, today=today, 
 # rpt was run in parallel on a cluster to decrease the amount of wall clock time.  See input_files/get_rpt_estimates.R.
 rdat_fn = file.path(input_dir, "repeat_estimates.20210928.Rdata")
 load(rdat_fn) # Loads rpt_combined_races, rpt_individual_races
+today = orig_today
 
 # Grab data
 tmp1 = do.call(rbind, lapply(names(rpt_combined_races), function(nboot) {
