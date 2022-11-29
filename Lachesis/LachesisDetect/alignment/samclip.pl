@@ -1,5 +1,7 @@
 #!/usr/bin/env perl
 
+# File modified from https://github.com/tseemann/samclip
+
 use strict;
 use warnings;
 use Getopt::Long;
